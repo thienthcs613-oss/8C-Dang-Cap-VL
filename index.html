@@ -404,6 +404,9 @@
 </head>
 <body>
 
+    <!-- THẺ NHẠC NỀN (BGM) -->
+    <audio id="bgm" loop src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a7321d.mp3?filename=game-music-loop-1-143979.mp3"></audio>
+
     <!-- CANVAS BACKGROUND HIỆU ỨNG SAO & KIM TUYẾN RƠI -->
     <canvas id="bgCanvas"></canvas>
 
@@ -464,7 +467,7 @@
         window.addEventListener('resize', resizeBgCanvas);
         resizeBgCanvas();
 
-        // TẠO CÁC HẠT KIM TUYẾN/TÂY/SAO RƠI TRÊN NỀN
+        /* TẠO CÁC HẠT KIM TUYẾN/TÂY/SAO RƠI TRÊN NỀN */
         const bgParticles = [];
         const numBgParticles = 80;
 
@@ -477,7 +480,7 @@
                 vx: (Math.random() - 0.5) * 0.5,
                 alpha: Math.random(),
                 dAlpha: (Math.random() * 0.02 + 0.005) * (Math.random() < 0.5 ? 1 : -1),
-                color: `hsl(${Math.random() * 60 + 40}, 100%, 75%)` // Tông vàng/kim tuyến lấp lánh
+                color: `hsl(${Math.random() * 60 + 40}, 100%, 75%)`
             });
         }
 
@@ -496,7 +499,7 @@
                 rot += step;
 
                 x = cx + Math.cos(rot) * innerRadius;
-                y = cy + Math.sin(rot) * innerRadius;
+                y = cy + Sin = cy + Math.sin(rot) * innerRadius;
                 ctx.lineTo(x, y);
                 rot += step;
             }
@@ -526,7 +529,6 @@
                 bgCtx.save();
                 bgCtx.globalAlpha = Math.max(0, p.alpha);
                 
-                // Vẽ ngôi sao lấp lánh hoặc hạt kim tuyến tròn
                 if (p.radius > 2) {
                     drawSparkle(bgCtx, p.x, p.y, 4, p.radius * 2.5, p.radius * 0.8, p.color);
                 } else {
@@ -544,6 +546,7 @@
         }
         animateBgParticles();
 
+        /* CÁC HÀM ÂM THANH SFX (WEB AUDIO API) */
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
@@ -619,10 +622,46 @@
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
-            osc.start(now);
+            osc.start();
             osc.stop(now + 0.25);
         }
 
+        function playHitSound(step) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const pitchMap = { 1: 220, 2: 330, 3: 523 };
+            const baseFreq = pitchMap[step] || 220;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioCtx.currentTime + 0.18);
+            gain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.18);
+        }
+
+        function playWinSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.08);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.08 + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + i * 0.08);
+                osc.stop(audioCtx.currentTime + i * 0.08 + 0.35);
+            });
+        }
+
+        /* LOGIC QUIZ */
         const quizData = [
             {
                 question: "Câu 1: Ai óc chó nhất lớp?",
@@ -671,6 +710,13 @@
             if (countdownStarted) return;
             countdownStarted = true;
             
+            // PHÁT NHẠC NỀN
+            const bgm = document.getElementById('bgm');
+            if (bgm) {
+                bgm.volume = 0.25; // Thiết lập âm lượng nhạc nền
+                bgm.play().catch(e => console.log("Lỗi phát nhạc nền:", e));
+            }
+
             startPrompt.style.display = 'none';
             countdownNum.style.display = 'block';
 
@@ -756,6 +802,7 @@
             }
         }
 
+        /* LOGIC GACHA MỞ HỘP QUÀ */
         let clickCount = 0;
         const maxClicks = 3;
 
@@ -785,41 +832,6 @@
             } else {
                 nextBtn.textContent = "Câu Hỏi Tiếp Theo";
             }
-        }
-
-        function playHitSound(step) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const pitchMap = { 1: 220, 2: 330, 3: 523 };
-            const baseFreq = pitchMap[step] || 220;
-
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioCtx.currentTime + 0.18);
-            gain.gain.setValueAtTime(0.7, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.18);
-        }
-
-        function playWinSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            notes.forEach((freq, i) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.08);
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime + i * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.08 + 0.35);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + i * 0.08);
-                osc.stop(audioCtx.currentTime + i * 0.08 + 0.35);
-            });
         }
 
         function getReward() {
@@ -913,25 +925,10 @@
                 quizSection.style.display = 'flex';
                 loadQuestion();
             } else {
-                currentQuestion = 0;
-                gameSection.style.display = 'none';
-                quizSection.style.display = 'flex';
-                loadQuestion();
+                alert("Chúc mừng bạn đã hoàn thành tất cả các câu hỏi!");
+                location.reload();
             }
         }
-        // Tạo đối tượng nhạc nền từ file Beneath the Rain.mp3 (đã đổi tên thành bgm.mp3)
-const bgm = new Audio('bgm.mp3');
-bgm.loop = true;   // Phát lặp lại liên tục khi hết bài
-bgm.volume = 0.4;  // Âm lượng vừa phải (40%) để không đè lên hiệu ứng âm thanh game
-
-// Tự động phát nhạc khi người chơi bắt đầu đếm ngược
-const originalStartCountdown = startCountdown;
-startCountdown = function() {
-    bgm.play().catch(error => {
-        console.log("Trình duyệt chặn tự động phát nhạc:", error);
-    });
-    originalStartCountdown();
-};
     </script>
 </body>
 </html>
