@@ -24,6 +24,53 @@
             overflow: hidden;
         }
 
+        /* MÀN HÌNH ĐẾM NGƯỢC BANG */
+        #countdownOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(17, 2, 36, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            cursor: pointer;
+        }
+
+        .start-prompt {
+            font-size: 1.5rem;
+            color: #ffd700;
+            font-weight: bold;
+            animation: pulseText 1.2s infinite alternate;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @keyframes pulseText {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+
+        .countdown-num {
+            font-size: 8rem;
+            font-weight: 900;
+            background: linear-gradient(180deg, #fff2a3, #ffd700, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            display: none;
+            animation: popIn 0.8s ease-out forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.2); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         /* HIỆU ỨNG RUNG KHUNG BÁO SAI */
         .shake-error {
             animation: shakeErrorAnim 0.4s cubic-bezier(.36,.07,.19,.97) both;
@@ -76,7 +123,6 @@
             transition: border-color 1s ease, background-color 1s ease, box-shadow 1s ease;
         }
 
-        /* MÀU KHUNG KHI TRẢ LỜI ĐÚNG */
         .quiz-card.correct-border {
             border-color: #2ecc71 !important;
             background: rgba(46, 204, 113, 0.15) !important;
@@ -84,7 +130,6 @@
             transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* MÀU KHUNG KHI TRẢ LỜI SAI */
         .quiz-card.wrong-border {
             border-color: #ff3333 !important;
             background: rgba(255, 51, 51, 0.25) !important;
@@ -92,7 +137,6 @@
             transition: border-color 0s, background-color 0s, box-shadow 0s;
         }
 
-        /* HIỆU ỨNG MỜ DẦN MÀU ĐỎ CỦA KHUNG */
         .quiz-card.fade-out-error {
             border-color: rgba(255, 215, 0, 0.3) !important;
             background: rgba(255, 255, 255, 0.08) !important;
@@ -130,7 +174,6 @@
             background: rgba(255, 215, 0, 0.4);
         }
 
-        /* DÒNG THÔNG BÁO SAI BẰNG CHỮ (CÓ HIỆU ỨNG MỜ DẦN) */
         .error-msg {
             color: #ff4d4d;
             font-size: 0.95rem;
@@ -138,12 +181,12 @@
             height: 20px;
             font-weight: bold;
             opacity: 0;
-            transition: opacity 1s ease; /* Mờ dần mượt mà trong 1 giây */
+            transition: opacity 1s ease;
         }
 
         .error-msg.show-text {
             opacity: 1;
-            transition: opacity 0s; /* Xuất hiện ngay lập tức */
+            transition: opacity 0s;
         }
 
         /* KHU VỰC HỘP QUÀ GACHA */
@@ -322,8 +365,14 @@
 </head>
 <body>
 
+    <!-- MÀN HÌNH ĐẾM NGƯỢC OVERLAY -->
+    <div id="countdownOverlay" onclick="startCountdown()">
+        <div class="start-prompt" id="startPrompt">👉 CHẠM VÀO MÀN HÌNH ĐỂ BẮT ĐẦU 👈</div>
+        <div class="countdown-num" id="countdownNum">3</div>
+    </div>
+
     <!-- MÀN HÌNH TRẮC NGHIỆM -->
-    <div id="quizSection">
+    <div id="quizSection" style="display: none;">
         <h1>CÂU HỎI THỬ THÁCH</h1>
         <div class="subtitle" id="quizProgress">Câu hỏi 1/5</div>
 
@@ -367,6 +416,36 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
+        // ÂM THANH ĐẾM NGƯỢC (TÍT)
+        function playTickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        // ÂM THANH BẮT ĐẦU (GO!)
+        function playGoSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
         function playCorrectSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
@@ -378,8 +457,8 @@
             osc1.type = 'sine';
             osc2.type = 'sine';
 
-            osc1.frequency.setValueAtTime(587.33, now); // Nốt D5
-            osc2.frequency.setValueAtTime(880, now + 0.1); // Nốt A5
+            osc1.frequency.setValueAtTime(587.33, now);
+            osc2.frequency.setValueAtTime(880, now + 0.1);
 
             gain.gain.setValueAtTime(0.3, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
@@ -420,34 +499,38 @@
             {
                 question: "Câu 1: Ai óc chó nhất lớp?",
                 options: ["A. Thư", "B. Nhật Minh", "C. Thịnh", "D. Hào"],
-                correct: 1 // B Đúng
+                correct: 1
             },
             {
                 question: "Câu 2: Ai đẹp trai nhất lớp?",
                 options: ["A. Kiệt", "B. Tiến", "C. Chức", "D. Thế Bảo"],
-                correct: 2 // C Đúng
+                correct: 2
             },
             {
                 question: "Câu 3: Ai xấu tính nhất lớp?",
                 options: ["A. Không biết", "B. Ai hỏi?", "C. Chính là tôi", "D. Biển ơi... "],
-                correct: 0 // A Đúng
+                correct: 0
             },
             {
                 question: "Câu 4: Thông minh nhất lớp?",
                 options: ["A. Thằng tạo ra web này ", "B. Ánh già", "C. Hoàng Văn Minh Hiếu", "D. Chính là tôi"],
-                correct: 0 // A Đúng
+                correct: 0
             },
             {
                 question: "Câu 5: Ai hài nhất lớp?",
                 options: ["A. Gia bảo", "B. Kiệt", "C. Hải", "D. Khánh Toàn"],
-                correct: 3 // D Đúng
+                correct: 3
             }
         ];
 
         let currentQuestion = 0;
         let isAnswering = false;
         let fadeTimeout = null;
+        let countdownStarted = false;
 
+        const countdownOverlay = document.getElementById('countdownOverlay');
+        const startPrompt = document.getElementById('startPrompt');
+        const countdownNum = document.getElementById('countdownNum');
         const quizSection = document.getElementById('quizSection');
         const gameSection = document.getElementById('gameSection');
         const questionText = document.getElementById('questionText');
@@ -455,6 +538,41 @@
         const quizProgress = document.getElementById('quizProgress');
         const errorMsg = document.getElementById('errorMsg');
         const quizCard = document.getElementById('quizCard');
+
+        // HÀM XỬ LÝ ĐẾM NGƯỢC 3-2-1
+        function startCountdown() {
+            if (countdownStarted) return;
+            countdownStarted = true;
+            
+            startPrompt.style.display = 'none';
+            countdownNum.style.display = 'block';
+
+            let count = 3;
+            countdownNum.textContent = count;
+            playTickSound();
+
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownNum.textContent = count;
+                    countdownNum.style.animation = 'none';
+                    void countdownNum.offsetWidth;
+                    countdownNum.style.animation = 'popIn 0.8s ease-out forwards';
+                    playTickSound();
+                } else if (count === 0) {
+                    countdownNum.textContent = "GO!";
+                    countdownNum.style.animation = 'none';
+                    void countdownNum.offsetWidth;
+                    countdownNum.style.animation = 'popIn 0.8s ease-out forwards';
+                    playGoSound();
+                } else {
+                    clearInterval(timer);
+                    countdownOverlay.style.display = 'none';
+                    quizSection.style.display = 'block';
+                    loadQuestion();
+                }
+            }, 1000);
+        }
 
         function loadQuestion() {
             isAnswering = false;
@@ -484,7 +602,6 @@
             errorMsg.classList.remove('show-text');
 
             if (selectedIndex === quizData[currentQuestion].correct) {
-                // TRẢ LỜI ĐÚNG
                 quizCard.classList.add('correct-border');
                 playCorrectSound();
                 
@@ -494,17 +611,15 @@
                     gameSection.style.display = 'flex';
                 }, 500);
             } else {
-                // TRẢ LỜI SAI: Khung đỏ + Chữ thông báo hiện rõ nét ngay lập tức
                 void quizCard.offsetWidth; 
                 quizCard.classList.add('wrong-border', 'shake-error');
                 errorMsg.classList.add('show-text');
                 playWrongSound();
 
-                // Sau 0.4s (khi vừa lắc xong), Khung đỏ và Dòng chữ bắt đầu MỜ DẦN đồng thời trong 1s
                 fadeTimeout = setTimeout(() => {
                     quizCard.classList.remove('wrong-border', 'shake-error');
                     quizCard.classList.add('fade-out-error');
-                    errorMsg.classList.remove('show-text'); // Kích hoạt mờ dần dòng chữ
+                    errorMsg.classList.remove('show-text');
                     
                     setTimeout(() => {
                         quizCard.classList.remove('fade-out-error');
@@ -513,8 +628,6 @@
                 }, 400);
             }
         }
-
-        loadQuestion();
 
         // ================= LOGIC GAME HỘP QUÀ GACHA =================
         let clickCount = 0;
