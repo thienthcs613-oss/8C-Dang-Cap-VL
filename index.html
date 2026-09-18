@@ -919,6 +919,19 @@
                 loadQuestion();
             }
         }
+        // Tạo đối tượng nhạc nền từ file Beneath the Rain.mp3 (đã đổi tên thành bgm.mp3)
+const bgm = new Audio('bgm.mp3');
+bgm.loop = true;   // Phát lặp lại liên tục khi hết bài
+bgm.volume = 0.4;  // Âm lượng vừa phải (40%) để không đè lên hiệu ứng âm thanh game
+
+// Tự động phát nhạc khi người chơi bắt đầu đếm ngược
+const originalStartCountdown = startCountdown;
+startCountdown = function() {
+    bgm.play().catch(error => {
+        console.log("Trình duyệt chặn tự động phát nhạc:", error);
+    });
+    originalStartCountdown();
+};
     </script>
 </body>
 </html>
