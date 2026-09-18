@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz & Gacha Lootbox Game</title>
+    <title>Quiz & Gacha Lootbox Magic Game</title>
     <style>
         * {
             box-sizing: border-box;
@@ -14,7 +14,7 @@
 
         body {
             background: radial-gradient(circle at center, #2b1055, #110224);
-            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+            font-family: 'Montserrat', 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -22,16 +22,29 @@
             justify-content: center;
             color: #ffffff;
             overflow: hidden;
+            position: relative;
         }
 
-        /* MÀN HÌNH ĐẾM NGƯỢC BANG */
+        /* BACKGROUND FALLING CANVAS */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* MÀN HÌNH ĐẾM NGƯỢC OVERLAY */
         #countdownOverlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(17, 2, 36, 0.95);
+            background: rgba(17, 2, 36, 0.92);
+            backdrop-filter: blur(8px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,6 +60,7 @@
             animation: pulseText 1.2s infinite alternate;
             text-align: center;
             padding: 20px;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
         }
 
         @keyframes pulseText {
@@ -71,6 +85,17 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* CONTAINER DÙNG CHUNG */
+        .content-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
         /* HIỆU ỨNG RUNG KHUNG BÁO SAI */
         .shake-error {
             animation: shakeErrorAnim 0.4s cubic-bezier(.36,.07,.19,.97) both;
@@ -87,7 +112,7 @@
         }
 
         h1 {
-            font-size: 2rem;
+            font-size: 2.2rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             background: linear-gradient(180deg, #fff2a3, #ffd700, #ffa500);
@@ -99,23 +124,24 @@
         }
 
         .subtitle {
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: #bfa8e6;
             margin-bottom: 20px;
             font-weight: 600;
             text-align: center;
+            text-shadow: 0 0 10px rgba(191, 168, 230, 0.5);
         }
 
         /* KHU VỰC CÂU HỎI TRẮC NGHIỆM */
         .quiz-card {
             background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-            border: 3px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(12px);
+            border: 3px solid rgba(255, 215, 0, 0.35);
             border-radius: 16px;
             padding: 25px 30px;
             width: 90%;
             max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 15px rgba(255, 215, 0, 0.1);
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -126,29 +152,30 @@
         .quiz-card.correct-border {
             border-color: #2ecc71 !important;
             background: rgba(46, 204, 113, 0.15) !important;
-            box-shadow: 0 0 25px rgba(46, 204, 113, 0.5) !important;
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.6) !important;
             transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .quiz-card.wrong-border {
             border-color: #ff3333 !important;
             background: rgba(255, 51, 51, 0.25) !important;
-            box-shadow: 0 0 30px rgba(255, 51, 51, 0.8) !important;
+            box-shadow: 0 0 35px rgba(255, 51, 51, 0.8) !important;
             transition: border-color 0s, background-color 0s, box-shadow 0s;
         }
 
         .quiz-card.fade-out-error {
-            border-color: rgba(255, 215, 0, 0.3) !important;
+            border-color: rgba(255, 215, 0, 0.35) !important;
             background: rgba(255, 255, 255, 0.08) !important;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
             transition: border-color 1s ease, background-color 1s ease, box-shadow 1s ease !important;
         }
 
         .question-title {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: #ffd700;
             margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .options-grid {
@@ -158,19 +185,26 @@
         }
 
         .option-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             color: #fff;
-            padding: 12px 18px;
-            border-radius: 8px;
+            padding: 14px 18px;
+            border-radius: 10px;
             font-size: 1rem;
             text-align: left;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.6);
+            transform: translateY(-2px);
         }
 
         .option-btn:active {
-            transform: scale(0.96);
+            transform: scale(0.97);
             background: rgba(255, 215, 0, 0.4);
         }
 
@@ -189,7 +223,6 @@
             transition: opacity 0s;
         }
 
-        /* KHU VỰC HỘP QUÀ GACHA */
         .game-stage {
             display: none;
             flex-direction: column;
@@ -198,8 +231,8 @@
 
         .stage {
             position: relative;
-            width: 300px;
-            height: 260px;
+            width: 320px;
+            height: 280px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -207,9 +240,9 @@
 
         .glow-bg {
             position: absolute;
-            width: 280px;
-            height: 280px;
-            background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, rgba(255,215,0,0) 70%);
+            width: 290px;
+            height: 290px;
+            background: radial-gradient(circle, rgba(255,215,0,0.35) 0%, rgba(255,215,0,0) 70%);
             border-radius: 50%;
             animation: pulseGlow 2s infinite alternate;
             z-index: 1;
@@ -217,7 +250,7 @@
 
         @keyframes pulseGlow {
             0% { transform: scale(0.9); opacity: 0.5; }
-            100% { transform: scale(1.2); opacity: 0.9; }
+            100% { transform: scale(1.25); opacity: 0.9; }
         }
 
         .box-wrapper {
@@ -310,7 +343,7 @@
             border-radius: 16px;
             padding: 20px 30px;
             text-align: center;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            box-shadow: 0 0 35px rgba(255, 215, 0, 0.7);
             transform: scale(0);
             opacity: 0;
             transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s;
@@ -324,12 +357,13 @@
         }
 
         .reward-icon {
-            font-size: 3.5rem;
+            font-size: 3.8rem;
             margin-bottom: 10px;
+            filter: drop-shadow(0 0 10px rgba(255,215,0,0.5));
         }
 
         .reward-title {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             color: #ffd700;
             font-weight: bold;
         }
@@ -346,7 +380,7 @@
 
         .next-btn {
             margin-top: 20px;
-            padding: 12px 30px;
+            padding: 12px 32px;
             font-size: 1rem;
             font-weight: bold;
             color: #fff;
@@ -355,7 +389,12 @@
             border-radius: 25px;
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
-            transition: transform 0.15s ease;
+            transition: transform 0.15s ease, background 0.3s;
+        }
+
+        .next-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(180deg, #34d07b, #2ecc71);
         }
 
         .next-btn:active {
@@ -365,6 +404,9 @@
 </head>
 <body>
 
+    <!-- CANVAS BACKGROUND HIỆU ỨNG SAO & KIM TUYẾN RƠI -->
+    <canvas id="bgCanvas"></canvas>
+
     <!-- MÀN HÌNH ĐẾM NGƯỢC OVERLAY -->
     <div id="countdownOverlay" onclick="startCountdown()">
         <div class="start-prompt" id="startPrompt">👉 CHẠM VÀO MÀN HÌNH ĐỂ BẮT ĐẦU 👈</div>
@@ -372,7 +414,7 @@
     </div>
 
     <!-- MÀN HÌNH TRẮC NGHIỆM -->
-    <div id="quizSection" style="display: none;">
+    <div id="quizSection" class="content-container" style="display: none;">
         <h1>CÂU HỎI THỬ THÁCH</h1>
         <div class="subtitle" id="quizProgress">Câu hỏi 1/5</div>
 
@@ -384,7 +426,7 @@
     </div>
 
     <!-- MÀN HÌNH MỞ HỘP QUÀ -->
-    <div class="game-stage" id="gameSection">
+    <div class="game-stage content-container" id="gameSection">
         <h1 id="rewardHeaderTitle">PHẦN THƯỞNG CỦA BẠN</h1>
         <div class="subtitle" id="statusText">Chạm 3 lần để mở hộp quà! (0/3)</div>
 
@@ -412,11 +454,99 @@
     </div>
 
     <script>
-        // BỘ TẠO ÂM THANH (Web Audio API)
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+
+        function resizeBgCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeBgCanvas);
+        resizeBgCanvas();
+
+        // TẠO CÁC HẠT KIM TUYẾN/TÂY/SAO RƠI TRÊN NỀN
+        const bgParticles = [];
+        const numBgParticles = 80;
+
+        for (let i = 0; i < numBgParticles; i++) {
+            bgParticles.push({
+                x: Math.random() * bgCanvas.width,
+                y: Math.random() * bgCanvas.height,
+                radius: Math.random() * 2.5 + 0.5,
+                vy: Math.random() * 1.2 + 0.3,
+                vx: (Math.random() - 0.5) * 0.5,
+                alpha: Math.random(),
+                dAlpha: (Math.random() * 0.02 + 0.005) * (Math.random() < 0.5 ? 1 : -1),
+                color: `hsl(${Math.random() * 60 + 40}, 100%, 75%)` // Tông vàng/kim tuyến lấp lánh
+            });
+        }
+
+        function drawSparkle(ctx, cx, cy, spikes, outerRadius, innerRadius, fillStyle) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fillStyle = fillStyle;
+            ctx.fill();
+        }
+
+        function animateBgParticles() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+            bgParticles.forEach(p => {
+                p.y += p.vy;
+                p.x += p.vx;
+                p.alpha += p.dAlpha;
+
+                if (p.alpha <= 0.1 || p.alpha >= 0.95) p.dAlpha = -p.dAlpha;
+
+                if (p.y > bgCanvas.height) {
+                    p.y = -10;
+                    p.x = Math.random() * bgCanvas.width;
+                }
+                if (p.x > bgCanvas.width) p.x = 0;
+                if (p.x < 0) p.x = bgCanvas.width;
+
+                bgCtx.save();
+                bgCtx.globalAlpha = Math.max(0, p.alpha);
+                
+                // Vẽ ngôi sao lấp lánh hoặc hạt kim tuyến tròn
+                if (p.radius > 2) {
+                    drawSparkle(bgCtx, p.x, p.y, 4, p.radius * 2.5, p.radius * 0.8, p.color);
+                } else {
+                    bgCtx.beginPath();
+                    bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    bgCtx.fillStyle = p.color;
+                    bgCtx.shadowBlur = 8;
+                    bgCtx.shadowColor = p.color;
+                    bgCtx.fill();
+                }
+                bgCtx.restore();
+            });
+
+            requestAnimationFrame(animateBgParticles);
+        }
+        animateBgParticles();
+
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
-        // ÂM THANH ĐẾM NGƯỢC (TÍT)
         function playTickSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
@@ -431,7 +561,6 @@
             osc.stop(audioCtx.currentTime + 0.15);
         }
 
-        // ÂM THANH BẮT ĐẦU (GO!)
         function playGoSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
@@ -494,7 +623,6 @@
             osc.stop(now + 0.25);
         }
 
-        // BỘ CÂU HỎI TRẮC NGHIỆM
         const quizData = [
             {
                 question: "Câu 1: Ai óc chó nhất lớp?",
@@ -539,7 +667,6 @@
         const errorMsg = document.getElementById('errorMsg');
         const quizCard = document.getElementById('quizCard');
 
-        // HÀM XỬ LÝ ĐẾM NGƯỢC 3-2-1
         function startCountdown() {
             if (countdownStarted) return;
             countdownStarted = true;
@@ -568,7 +695,7 @@
                 } else {
                     clearInterval(timer);
                     countdownOverlay.style.display = 'none';
-                    quizSection.style.display = 'block';
+                    quizSection.style.display = 'flex';
                     loadQuestion();
                 }
             }, 1000);
@@ -609,7 +736,7 @@
                     quizSection.style.display = 'none';
                     setupBoxScreen();
                     gameSection.style.display = 'flex';
-                }, 500);
+                }, 600);
             } else {
                 void quizCard.offsetWidth; 
                 quizCard.classList.add('wrong-border', 'shake-error');
@@ -629,7 +756,6 @@
             }
         }
 
-        // ================= LOGIC GAME HỘP QUÀ GACHA =================
         let clickCount = 0;
         const maxClicks = 3;
 
@@ -643,8 +769,8 @@
         const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = 320;
+        canvas.height = 280;
 
         function setupBoxScreen() {
             clickCount = 0;
@@ -699,28 +825,27 @@
         function getReward() {
             const rate = Math.floor(Math.random() * 100) + 1;
             if (rate <= 40) {
-                return { text: "Bạn nhận được 1 viên kẹo!", icon: "🍬" };
+                return { text: "Bạn nhận được 1 viên kẹo ngọt!", icon: "🍬" };
             } else if (rate <= 80) {
                 return { text: "Bạn nhận được 1 gói bim bim!", icon: "🍿" };
             } else {
-                return { text: "Chúc bạn may mắn lần sau!", icon: "😂" };
+                return { text: "Một nụ cười thật tươi! 😊", icon: "✨" };
             }
         }
 
         let particles = [];
         function createParticles() {
-            const rect = boxWrapper.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
 
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 70; i++) {
                 particles.push({
                     x: centerX,
                     y: centerY,
-                    vx: (Math.random() - 0.5) * 12,
-                    vy: (Math.random() - 0.5) * 12 - 2,
-                    size: Math.random() * 6 + 4,
-                    color: `hsl(${Math.random() * 360}, 100%, 60%)`,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: (Math.random() - 0.5) * 14 - 3,
+                    size: Math.random() * 6 + 3,
+                    color: `hsl(${Math.random() * 360}, 100%, 65%)`,
                     life: 1
                 });
             }
@@ -731,7 +856,7 @@
             particles.forEach((p, index) => {
                 p.x += p.vx;
                 p.y += p.vy;
-                p.vy += 0.2;
+                p.vy += 0.22;
                 p.life -= 0.02;
 
                 ctx.beginPath();
@@ -785,12 +910,12 @@
 
             if (currentQuestion < quizData.length) {
                 gameSection.style.display = 'none';
-                quizSection.style.display = 'block';
+                quizSection.style.display = 'flex';
                 loadQuestion();
             } else {
                 currentQuestion = 0;
                 gameSection.style.display = 'none';
-                quizSection.style.display = 'block';
+                quizSection.style.display = 'flex';
                 loadQuestion();
             }
         }
