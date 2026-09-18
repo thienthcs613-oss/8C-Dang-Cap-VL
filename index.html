@@ -404,8 +404,8 @@
 </head>
 <body>
 
-    <!-- THẺ NHẠC NỀN (BGM) -->
-    <audio id="bgm" loop src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a7321d.mp3?filename=game-music-loop-1-143979.mp3"></audio>
+    <!-- THẺ NHẠC NỀN TRỎ ĐẾN FILE MP3 TRÊN GITHUB -->
+    <audio id="bgm" loop src="Nom - Beneath the Rain.mp3"></audio>
 
     <!-- CANVAS BACKGROUND HIỆU ỨNG SAO & KIM TUYẾN RƠI -->
     <canvas id="bgCanvas"></canvas>
@@ -467,7 +467,6 @@
         window.addEventListener('resize', resizeBgCanvas);
         resizeBgCanvas();
 
-        /* TẠO CÁC HẠT KIM TUYẾN/TÂY/SAO RƠI TRÊN NỀN */
         const bgParticles = [];
         const numBgParticles = 80;
 
@@ -499,7 +498,7 @@
                 rot += step;
 
                 x = cx + Math.cos(rot) * innerRadius;
-                y = cy + Sin = cy + Math.sin(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
                 ctx.lineTo(x, y);
                 rot += step;
             }
@@ -546,7 +545,6 @@
         }
         animateBgParticles();
 
-        /* CÁC HÀM ÂM THANH SFX (WEB AUDIO API) */
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
@@ -661,7 +659,6 @@
             });
         }
 
-        /* LOGIC QUIZ */
         const quizData = [
             {
                 question: "Câu 1: Ai óc chó nhất lớp?",
@@ -710,10 +707,9 @@
             if (countdownStarted) return;
             countdownStarted = true;
             
-            // PHÁT NHẠC NỀN
             const bgm = document.getElementById('bgm');
             if (bgm) {
-                bgm.volume = 0.25; // Thiết lập âm lượng nhạc nền
+                bgm.volume = 0.3;
                 bgm.play().catch(e => console.log("Lỗi phát nhạc nền:", e));
             }
 
@@ -802,7 +798,6 @@
             }
         }
 
-        /* LOGIC GACHA MỞ HỘP QUÀ */
         let clickCount = 0;
         const maxClicks = 3;
 
